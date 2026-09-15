@@ -6,7 +6,6 @@ import { file, type BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
 import path from "node:path";
 
-
 type Thumbnail = {
   data: ArrayBuffer;
   mediaType: string;
@@ -34,6 +33,10 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
     throw new BadRequestError("More than 10MB");
 
   const imageType = imageFile.type;
+
+  if (imageType !== "image/jpeg" && imageType !== "image/png")
+    throw new BadRequestError("The file must be image/jpeg or image/png");
+  
   const extension = imageType.split("/")[1];
   const imageBytes = await imageFile.arrayBuffer();
 
@@ -48,8 +51,7 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const filePath = path.join(cfg.assetsRoot, `${videoId}.${extension}`);
 
   const f = await Bun.write(filePath, imageBytes);
-  if (!f)
-    throw new Error("Can't create the file");
+  if (!f) throw new Error("Can't create the file");
 
   const thumbnailURL = `http://localhost:${cfg.port}/assets/${videoId}.${extension}`;
 
